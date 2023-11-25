@@ -21,6 +21,10 @@ package com.test.mianshi;
  * 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
  */
 
+import cn.hutool.core.collection.CollUtil;
+
+import java.util.*;
+
 /**
  * @Author wgc
  * @Description //TODO
@@ -52,11 +56,26 @@ public class T1_StrIfSame {
 //        int i=2;
 //        System.out.println(i+=i-=i*i);
 
-        int a=1,b=1;
+//        String a = "aaa123bbbccc";
+//        String b = "aa";
+//        List<String> resultList = Arrays.asList("aaa","bbb");
+//        System.out.println(resultList.contains(a));
+//        System.out.println(resultList.contains(b));
 
-//        boolean flag=!(++a==b);;
-        boolean flag=a++==b;
-        System.out.println(flag);
+//        List<Long> list = Arrays.asList(1L,2L,3L,5L);
+//        List<Long> idList = new ArrayList<>();
+//        idList.add(2L);
+//        idList.add(5L);
+//        System.out.println("移除前："+list.toString());
+//        CollUtil.removeAny(list,2L);
+//        System.out.println("移除后:"+list.toString());
+
+        String aa = "abc";
+        String[] split = aa.split(",");
+        for(String item:split){
+            System.out.println(item);
+        }
+
 
     }
     public static boolean isUnique(String astr) {
