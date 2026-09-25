@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 /**
- * NIO 服务器教学示例（正确处理可读字节、部分写出、关闭 channel）
+ * NIO 服务器：正确处理可读字节、部分写出（OP_WRITE + attachment 缓存剩余数据）、关闭 channel。
  */
 public class NIOServer {
     private Selector selector;
@@ -56,6 +56,8 @@ public class NIOServer {
             handleAccept(key);
         } else if (key.isReadable()) {
             handlerRead(key);
+        } else if (key.isWritable()) {
+            handlerWrite(key);
         }
     }
 
@@ -82,24 +84,41 @@ public class NIOServer {
             System.out.println("服务器端接收到的消息是:" + msg);
 
             ByteBuffer outBuffer = ByteBuffer.wrap("好的".getBytes(StandardCharsets.UTF_8));
-            while (outBuffer.hasRemaining()) {
-                int written = channel.write(outBuffer);
-                if (written == 0) {
-                    // 暂不可写，简单阻塞等待（教学示例；生产应切 OP_WRITE）
-                    break;
-                }
-            }
+            key.attach(outBuffer);
+            key.interestOps(SelectionKey.OP_WRITE);
+            writePending(key);
         } else if (read == -1) {
             System.out.println("客户端关闭!");
             closeKey(key);
         }
-        // read == 0：无数据，忽略
+    }
+
+    public void handlerWrite(SelectionKey key) throws IOException {
+        writePending(key);
+    }
+
+    private void writePending(SelectionKey key) throws IOException {
+        SocketChannel channel = (SocketChannel) key.channel();
+        ByteBuffer pending = (ByteBuffer) key.attachment();
+        if (pending == null) {
+            return;
+        }
+        while (pending.hasRemaining()) {
+            int written = channel.write(pending);
+            if (written == 0) {
+                // 发送缓冲区满，保留 attachment，等待下次 OP_WRITE
+                return;
+            }
+        }
+        key.attach(null);
+        key.interestOps(SelectionKey.OP_READ);
     }
 
     private void closeKey(SelectionKey key) throws IOException {
         if (key == null) {
             return;
         }
+        key.attach(null);
         key.cancel();
         if (key.channel() != null) {
             key.channel().close();
